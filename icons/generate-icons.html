@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Parsiras Icons generieren</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; background: #f0f0f0; text-align: center; }
+    h2 { margin-bottom: 8px; }
+    p  { color: #555; margin-bottom: 24px; }
+    canvas { display: block; margin: 10px auto; border-radius: 20px; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+    button {
+      display: inline-block; margin: 8px; padding: 12px 24px;
+      background: #2D5016; color: white; border: none; border-radius: 8px;
+      font-size: 15px; cursor: pointer; border-radius: 8px;
+    }
+    button:hover { background: #3D6B1F; }
+    .note { font-size: 12px; color: #888; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h2>🏔 Parsiras – Icon Generator</h2>
+  <p>Klicke auf die Buttons um die Icons herunterzuladen und danach auf GitHub hochzuladen.</p>
+
+  <canvas id="c512" width="512" height="512"></canvas>
+
+  <div>
+    <button onclick="download(512)">⬇ icon-512.png herunterladen</button>
+    <button onclick="download(192)">⬇ icon-192.png herunterladen</button>
+  </div>
+
+  <p class="note">Nach dem Download: Beide Dateien in den <code>icons/</code> Ordner deines GitHub Repositories hochladen.</p>
+
+<script>
+function drawIcon(ctx, size) {
+  const s = size / 512;
+
+  // Hintergrund
+  const bg = ctx.createLinearGradient(0, 0, 0, size);
+  bg.addColorStop(0, '#3D6B1F');
+  bg.addColorStop(1, '#1C3A0A');
+  roundRect(ctx, 0, 0, size, size, 96 * s, bg);
+
+  // Hintere Berge
+  ctx.globalAlpha = 0.22;
+  triangle(ctx, [80,400,210,190,310,400], s, 'white');
+  ctx.globalAlpha = 0.18;
+  triangle(ctx, [260,400,390,185,490,400], s, 'white');
+  ctx.globalAlpha = 1;
+
+  // Hauptberg
+  triangle(ctx, [256,72,430,400,82,400], s, 'white');
+
+  // Schneekuppe
+  triangle(ctx, [256,72,305,175,207,175], s, 'white');
+
+  // Tiefenschatten Berg
+  ctx.globalAlpha = 0.25;
+  triangle(ctx, [256,155,430,400,310,400], s, '#D4EDBA');
+  ctx.globalAlpha = 1;
+
+  // Hütte
+  ctx.fillStyle = '#8B1A1A';
+  roundRectFill(ctx, 208*s, 330*s, 100*s, 70*s, 4*s);
+
+  // Dach
+  triangle(ctx, [196,335,258,292,320,335], s, '#6B1212');
+
+  // Tür
+  roundRectFill(ctx, 242*s, 354*s, 28*s, 46*s, 4*s, '#1C3A0A');
+
+  // Fenster links
+  roundRectFill(ctx, 214*s, 344*s, 20*s, 18*s, 3*s, '#AED6F1');
+  // Fenster rechts
+  roundRectFill(ctx, 278*s, 344*s, 20*s, 18*s, 3*s, '#AED6F1');
+
+  // Fensterkreuze
+  ctx.strokeStyle = '#1C3A0A';
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = 1.5 * s;
+  line(ctx, 224, 344, 224, 362, s);
+  line(ctx, 214, 353, 234, 353, s);
+  line(ctx, 288, 344, 288, 362, s);
+  line(ctx, 278, 353, 298, 353, s);
+  ctx.globalAlpha = 1;
+
+  // Boden
+  ctx.globalAlpha = 0.5;
+  roundRectFill(ctx, 82*s, 396*s, 348*s, 8*s, 4*s, '#4A7C24');
+  ctx.globalAlpha = 1;
+}
+
+function roundRect(ctx, x, y, w, h, r, fill) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+
+function roundRectFill(ctx, x, y, w, h, r, color) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function triangle(ctx, pts, s, color) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0]*s, pts[1]*s);
+  ctx.lineTo(pts[2]*s, pts[3]*s);
+  ctx.lineTo(pts[4]*s, pts[5]*s);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function line(ctx, x1, y1, x2, y2, s) {
+  ctx.beginPath();
+  ctx.moveTo(x1*s, y1*s);
+  ctx.lineTo(x2*s, y2*s);
+  ctx.stroke();
+}
+
+function download(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width  = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  drawIcon(ctx, size);
+  const a = document.createElement('a');
+  a.download = `icon-${size}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+// Vorschau auf 512er Canvas
+const preview = document.getElementById('c512');
+const ctx = preview.getContext('2d');
+drawIcon(ctx, 512);
+</script>
+</body>
+</html>
