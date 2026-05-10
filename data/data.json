@@ -1,4 +1,15 @@
 {
-  "bookings": [],
+  "bookings": [
+    {
+      "id": "bk_mozgzcwp3gdrp",
+      "dateFrom": "2026-05-14",
+      "dateTo": "2026-05-17",
+      "beleger": "Nessenson",
+      "erfasser": "Patrick",
+      "bemerkung": "",
+      "erfasstAm": "2026-05-10T07:47:05.881Z",
+      "geaendertAm": "2026-05-10T07:47:05.881Z"
+    }
+  ],
   "notes": []
 }
