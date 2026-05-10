@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Parsiras – Hüttenreservation</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2D5016">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Parsiras">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     SETUP SCREEN
+════════════════════════════════════════════ -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">
+      <span class="logo-icon">🏔</span>
+      <h1>Parsiras</h1>
+      <p>Hüttenreservation einrichten</p>
+    </div>
+
+    <form id="setup-form">
+      <div class="form-group">
+        <label>GitHub Benutzername</label>
+        <input id="setup-owner" type="text" placeholder="z.B. meinname" autocomplete="off" required>
+      </div>
+      <div class="form-group">
+        <label>Repository Name</label>
+        <input id="setup-repo" type="text" placeholder="z.B. parsiras-huette" autocomplete="off" required>
+      </div>
+      <div class="form-group">
+        <label>Persönlicher Zugriffstoken (PAT)</label>
+        <input id="setup-token" type="password" placeholder="ghp_…" autocomplete="off" required>
+        <p class="form-hint">GitHub → Settings → Developer Settings → Personal Access Tokens → Fine-grained token (Berechtigung: Contents read &amp; write)</p>
+      </div>
+      <div class="form-group">
+        <label>Dein Name (Erfasser)</label>
+        <input id="setup-erfasser" type="text" placeholder="z.B. Peter" autocomplete="name" required>
+        <p class="form-hint">Wird lokal auf diesem Gerät gespeichert und bei Reservationen vorausgefüllt.</p>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:8px">Verbinden &amp; starten →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════════ -->
+<div id="main-app" class="hidden">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div>
+      <div class="header-title">🏔 Parsiras</div>
+      <div class="header-subtitle">Hüttenreservation</div>
+    </div>
+    <button id="btn-header-refresh" class="btn-refresh" aria-label="Daten aktualisieren">↻</button>
+  </header>
+
+  <!-- ── CALENDAR TAB ── -->
+  <section id="tab-calendar" class="tab-content">
+    <div class="cal-nav">
+      <button id="cal-prev" class="btn-cal-nav" aria-label="Vorheriger Monat">‹</button>
+      <span id="cal-header" class="cal-month-title"></span>
+      <button id="cal-next" class="btn-cal-nav" aria-label="Nächster Monat">›</button>
+    </div>
+
+    <div id="cal-grid" class="cal-grid" role="grid" aria-label="Belegungskalender"></div>
+
+    <div class="cal-legend">
+      <div class="legend-item"><div class="legend-dot free"></div> Frei</div>
+      <div class="legend-item"><div class="legend-dot booked"></div> Belegt</div>
+      <div class="legend-item"><div class="legend-dot today"></div> Heute</div>
+    </div>
+  </section>
+
+  <!-- ── NOTES TAB ── -->
+  <section id="tab-notes" class="tab-content hidden">
+    <div class="notes-toolbar">
+      <button class="filter-btn active" data-filter="alle">Alle</button>
+      <button class="filter-btn"        data-filter="offen">Offen</button>
+      <button class="filter-btn"        data-filter="erledigt">Erledigt</button>
+    </div>
+    <div id="notes-list" class="notes-list"></div>
+  </section>
+
+  <!-- ── SETTINGS TAB ── -->
+  <section id="tab-settings" class="tab-content hidden">
+
+    <!-- Bevorstehende Reservationen -->
+    <div class="settings-section">
+      <div class="settings-section-title">Bevorstehende Reservationen</div>
+      <div id="upcoming-list"></div>
+    </div>
+
+    <!-- Erfasser ändern -->
+    <div class="settings-section" style="margin-top:20px">
+      <div class="settings-section-title">Dein Name</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <span class="settings-label">Aktuell</span>
+          <span id="s-erfasser" class="settings-value"></span>
+        </div>
+        <div class="settings-inline">
+          <input id="input-erfasser" type="text" placeholder="Neuer Name">
+          <button id="btn-change-erfasser" class="btn-outline">Speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub Konfiguration -->
+    <div class="settings-section" style="margin-top:20px">
+      <div class="settings-section-title">GitHub Verbindung</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <span class="settings-label">Benutzer</span>
+          <span id="s-owner" class="settings-value"></span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">Repository</span>
+          <span id="s-repo" class="settings-value"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aktionen -->
+    <div class="settings-actions" style="margin-top:20px">
+      <button id="btn-reload" class="btn-outline">↻ Daten neu laden</button>
+      <button id="btn-reset"  class="btn-danger">Konfiguration zurücksetzen</button>
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:var(--text-muted);padding:20px 16px 8px">
+      Parsiras Hüttenreservation · Alle Daten werden in deinem GitHub Repository gespeichert.
+    </p>
+  </section>
+
+  <!-- FABs -->
+  <button id="fab-booking" class="fab" aria-label="Neue Reservation">+</button>
+  <button id="fab-note"    class="fab hidden" aria-label="Neuer Notiz-Eintrag">+</button>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="calendar" aria-label="Kalender">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Kalender</span>
+    </button>
+    <button class="nav-btn" data-tab="notes" aria-label="Notizen">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Notizen</span>
+    </button>
+    <button class="nav-btn" data-tab="settings" aria-label="Übersicht">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Übersicht</span>
+    </button>
+  </nav>
+</div><!-- end #main-app -->
+
+<!-- ════════════════════════════════════════════
+     BOOKING MODAL
+════════════════════════════════════════════ -->
+<div id="booking-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bm-title">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span id="bm-title" class="modal-title">Neue Reservation</span>
+      <button id="bm-close" class="btn-modal-close" aria-label="Schliessen">✕</button>
+    </div>
+
+    <form id="booking-form">
+      <div class="modal-body">
+        <div class="date-row">
+          <div class="form-group">
+            <label for="bm-date-from">Von *</label>
+            <input id="bm-date-from" type="date" required>
+          </div>
+          <div class="form-group">
+            <label for="bm-date-to">Bis *</label>
+            <input id="bm-date-to" type="date" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bm-beleger">Beleger (wer kommt) *</label>
+          <input id="bm-beleger" type="text" placeholder="Name oder Familie…" autocomplete="off" required>
+        </div>
+
+        <div class="form-group">
+          <label for="bm-erfasser">Erfasst von *</label>
+          <input id="bm-erfasser" type="text" placeholder="Dein Name" required>
+          <p class="form-hint">Vorausgefüllt mit deinem gespeicherten Namen. Kann angepasst werden.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="bm-bemerkung">Bemerkung</label>
+          <textarea id="bm-bemerkung" placeholder="z.B. Anzahl Personen, besondere Hinweise…"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="bm-delete" class="btn-danger hidden">Löschen</button>
+        <button type="submit" class="btn-primary">Speichern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     NOTE MODAL
+════════════════════════════════════════════ -->
+<div id="note-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="nm-title">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span id="nm-title" class="modal-title">Neuer Eintrag</span>
+      <button id="nm-close" class="btn-modal-close" aria-label="Schliessen">✕</button>
+    </div>
+
+    <form id="note-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="nm-titel">Titel *</label>
+          <input id="nm-titel" type="text" placeholder="Was muss gemacht/besorgt werden?" required>
+        </div>
+
+        <div class="form-group">
+          <label>Kategorie</label>
+          <div class="seg-control">
+            <input type="radio" name="nm-kat" id="nm-kat-arbeiten" value="arbeiten" checked>
+            <label for="nm-kat-arbeiten">🔧 Arbeiten</label>
+            <input type="radio" name="nm-kat" id="nm-kat-einkauf" value="einkauf">
+            <label for="nm-kat-einkauf">🛒 Einkauf</label>
+            <input type="radio" name="nm-kat" id="nm-kat-sonstiges" value="sonstiges">
+            <label for="nm-kat-sonstiges">📝 Sonstiges</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Priorität</label>
+          <div class="seg-control">
+            <input type="radio" name="nm-pri" id="nm-pri-hoch" value="hoch">
+            <label for="nm-pri-hoch">! Hoch</label>
+            <input type="radio" name="nm-pri" id="nm-pri-normal" value="normal" checked>
+            <label for="nm-pri-normal">Normal</label>
+            <input type="radio" name="nm-pri" id="nm-pri-niedrig" value="niedrig">
+            <label for="nm-pri-niedrig">Niedrig</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="nm-beschreibung">Beschreibung</label>
+          <textarea id="nm-beschreibung" placeholder="Weitere Details, Hinweise…"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="nm-erfasser">Erfasst von *</label>
+          <input id="nm-erfasser" type="text" placeholder="Dein Name" required>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="nm-delete" class="btn-danger hidden">Löschen</button>
+        <button type="submit" class="btn-primary">Speichern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     LOADING & TOAST
+════════════════════════════════════════════ -->
+<div id="loading" class="hidden" role="status" aria-live="polite">
+  <div class="spinner"></div>
+  <div class="loading-text">Bitte warten…</div>
+</div>
+
+<div id="toast" class="toast" role="alert" aria-live="assertive"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
