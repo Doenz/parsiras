@@ -77,10 +77,13 @@ input, select, textarea { font: inherit; }
   text-align: center;
   margin-bottom: 28px;
 }
-.setup-logo .logo-icon {
-  font-size: 48px;
+.setup-logo .logo-img {
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
   display: block;
-  margin-bottom: 8px;
+  margin: 0 auto 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
 }
 .setup-logo h1 {
   font-size: 26px;
@@ -182,6 +185,9 @@ input, select, textarea { font: inherit; }
   display: flex;
   flex-direction: column;
   height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ── Header ── */
@@ -277,12 +283,13 @@ input, select, textarea { font: inherit; }
 
 .cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
-  padding: 0 10px;
+  padding: 0 12px;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .cal-header-cell {
@@ -293,6 +300,8 @@ input, select, textarea { font: inherit; }
   padding: 4px 0 8px;
   text-transform: uppercase;
   letter-spacing: .5px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .cal-cell {
@@ -307,6 +316,9 @@ input, select, textarea { font: inherit; }
   padding: 2px;
   transition: background .1s;
   gap: 1px;
+  min-width: 0;
+  overflow: hidden;
+  width: 100%;
 }
 .cal-cell:not(.empty):not(.past):active { background: var(--green-lite); }
 .cal-cell.empty { cursor: default; }
@@ -341,8 +353,10 @@ input, select, textarea { font: inherit; }
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  width: 100%;
   max-width: 100%;
   text-align: center;
+  display: block;
 }
 
 /* Calendar legend */
