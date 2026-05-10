@@ -671,8 +671,39 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('setup-screen').classList.remove('hidden');
   }
 
-  // Register service worker
+  // Service Worker mit Update-Erkennung
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+
+      // Alle 60 Sekunden auf neue Version prüfen
+      setInterval(() => reg.update(), 60000);
+
+      // SW wartet bereits (z.B. zweiter Tab offen)
+      if (reg.waiting) showUpdateBanner(reg.waiting);
+
+      // Neue Version gefunden während App offen ist
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(newSW);
+          }
+        });
+      });
+    }).catch(() => {});
+
+    // Wenn neuer SW übernimmt → Seite automatisch neu laden
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  }
+
+  function showUpdateBanner(sw) {
+    const banner = document.getElementById('update-banner');
+    if (!banner) return;
+    banner.classList.remove('hidden');
+    document.getElementById('update-btn').addEventListener('click', () => {
+      sw.postMessage('skipWaiting');
+    });
   }
 });
